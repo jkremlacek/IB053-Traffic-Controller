@@ -43,6 +43,7 @@ public class CrossroadManager extends Thread {
     }
 
     public void addCommand(CrossroadCommand cmd) {
+        //TODO: tram priority over pedestrian buttons
         commandQueue.add(cmd);
     }
 
@@ -55,7 +56,8 @@ public class CrossroadManager extends Thread {
                 } else {
                     //external command present
 
-                    Iterator<CrossroadCommand> it = commandQueue.iterator();
+                    //get top priority command (tram has higher priority than pedestrian)
+                    Iterator<CrossroadCommand> it = getIterator();
 
                     CrossroadCommand cmd = it.next();
 
@@ -81,5 +83,26 @@ public class CrossroadManager extends Thread {
                 e.printStackTrace();
             }
         }
+    }
+
+    public Iterator<CrossroadCommand> getIterator() {
+        CrossroadCommand[] commandsInQueue = commandQueue.toArray(new CrossroadCommand[commandQueue.size()]);
+
+        int j = 0;
+
+        for (int i = 0; i < commandsInQueue.length; i++) {
+            if (commandsInQueue[i].getState() == Crossroad.CrossroadState.ONE) {
+                j = i;
+                break;
+            }
+        }
+
+        Iterator<CrossroadCommand> it = commandQueue.iterator();
+
+        for (int i = 0; i < j; i++) {
+            it.next();
+        }
+
+        return it;
     }
 }
