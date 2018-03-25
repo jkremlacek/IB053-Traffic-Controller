@@ -2,6 +2,8 @@ package cz.jkremlacek.ib053.models;
 
 import java.util.*;
 
+import static cz.jkremlacek.ib053.CrossroadManager.INTERCHANGE_TIMEOUT;
+
 /**
  * @author Jakub Kremláček
  */
@@ -59,7 +61,7 @@ public class Crossroad {
     }
 
     public void switchStateTo(CrossroadState state, int manualNum) {
-        if (this.state == state) {
+        if (this.state == state && manualNum != -1) {
             return;
         }
 
@@ -70,7 +72,7 @@ public class Crossroad {
         switchLights(state, manualNum);
 
         try {
-            Thread.sleep(5000);
+            Thread.sleep(INTERCHANGE_TIMEOUT);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -96,8 +98,12 @@ public class Crossroad {
 
             for (int i = 0; i < pedestrianSemaphoresManual.size(); i++) {
                 if (i != manualNum) {
-                    pedestrianSemaphoresManual.get(manualNum).getKey().changeColor(Semaphore.SemaphoreColor.RED);
+                    pedestrianSemaphoresManual.get(i).getKey().changeColor(Semaphore.SemaphoreColor.RED);
                 }
+            }
+        } else {
+            for (int i = 0; i < pedestrianSemaphoresManual.size(); i++) {
+                pedestrianSemaphoresManual.get(i).getKey().changeColor(Semaphore.SemaphoreColor.RED);
             }
         }
     }
@@ -122,7 +128,7 @@ public class Crossroad {
         for (Map.Entry<Semaphore, CrossroadState> entry : entries) {
             Map <String, Object> m = new HashMap<>();
 
-            m.put("pos", entry.getValue());
+            m.put("greenAt", entry.getValue());
             m.put("semaphoreState", entry.getKey());
 
             l.add(m);

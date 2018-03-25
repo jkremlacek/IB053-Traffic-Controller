@@ -4,6 +4,8 @@ import cz.jkremlacek.ib053.models.Crossroad;
 import cz.jkremlacek.ib053.models.CrossroadCommand;
 
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Jakub Kremláček
@@ -17,6 +19,10 @@ public class CrossroadManager extends Thread {
     //how often should be queue checked
     private static final int REFRESH_RATE = 1 * 1000;
 
+    public static final int INTERCHANGE_TIMEOUT = 5000;
+
+
+    private final Lock queueMutex = new ReentrantLock(true);
     private Crossroad crossroad = Crossroad.getSimpleCrossroad();
     private int timeout = 0;
 
@@ -38,13 +44,16 @@ public class CrossroadManager extends Thread {
 
         m.put("remainingTime", remainingTime > 0 ? remainingTime : 0);
         m.put("semaphores", crossroad.toMap());
+        m.put("queue", commandQueue);
 
         return m;
     }
 
     public void addCommand(CrossroadCommand cmd) {
         //TODO: tram priority over pedestrian buttons
+        queueMutex.lock();
         commandQueue.add(cmd);
+        queueMutex.unlock();
     }
 
     public void run() {
@@ -55,6 +64,8 @@ public class CrossroadManager extends Thread {
                     crossroad.switchState();
                 } else {
                     //external command present
+
+                    queueMutex.lock();
 
                     //get top priority command (tram has higher priority than pedestrian)
                     Iterator<CrossroadCommand> it = getIterator();
@@ -70,6 +81,8 @@ public class CrossroadManager extends Thread {
                     }
 
                     it.remove();
+
+                    queueMutex.unlock();
                 }
 
                 timeout = 0;

@@ -22,4 +22,15 @@ public class CrossroadCommand {
     public int getCrossroadNumber() {
         return crossroadNumber;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        CrossroadCommand other = (CrossroadCommand) o;
+        return state.equals(other.getState()) && crossroadNumber == other.getCrossroadNumber();
+    }
+
+    @Override
+    public int hashCode() {
+        return 13 * (state == null ? "NONE".hashCode() : state.hashCode()) + crossroadNumber;
+    }
 }
