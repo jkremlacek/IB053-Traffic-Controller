@@ -13,14 +13,12 @@ import java.util.concurrent.locks.ReentrantLock;
 public class CrossroadManager extends Thread {
     private static CrossroadManager INSTANCE;
 
-    //time for how long one switch holds
-    private static final int TIMEOUT_THRESHOLD = 15 * 1000;
-
     //how often should be queue checked
     private static final int REFRESH_RATE = 1 * 1000;
 
     public static final int INTERCHANGE_TIMEOUT = 5000;
 
+    private boolean init = true;
 
     private final Lock queueMutex = new ReentrantLock(true);
     private Crossroad crossroad = Crossroad.getSimpleCrossroad();
@@ -40,7 +38,7 @@ public class CrossroadManager extends Thread {
     public Map<String, Object> getCurrentCrossroadState() {
         Map<String, Object> m = new HashMap<>();
 
-        int remainingTime = TIMEOUT_THRESHOLD - timeout;
+        int remainingTime = crossroad.getStateWaitTime() - timeout;
 
         m.put("remainingTime", remainingTime > 0 ? remainingTime : 0);
         m.put("semaphores", crossroad.toMap());
@@ -58,7 +56,7 @@ public class CrossroadManager extends Thread {
 
     public void run() {
         while(true) {
-            if (timeout > TIMEOUT_THRESHOLD) {
+            if (timeout > crossroad.getStateWaitTime()) {
                 if (commandQueue.isEmpty()) {
                     //no external command, do regular swap
                     crossroad.switchState();

@@ -11,6 +11,14 @@ public class Crossroad {
 
     public enum CrossroadState {ONE, TWO, STOP}
 
+    private static final Map<CrossroadState, Integer> stateTime;
+    static {
+        stateTime = new HashMap<>();
+        stateTime.put(CrossroadState.ONE, 20000);
+        stateTime.put(CrossroadState.TWO, 15000);
+        stateTime.put(CrossroadState.STOP, 5000);
+    }
+
     private List<Map.Entry<Semaphore, CrossroadState>> trafficSemaphores = new LinkedList<>();
     private List<Map.Entry<Semaphore, CrossroadState>> pedestrianSemaphores = new LinkedList<>();
     private List<Map.Entry<Semaphore, CrossroadState>> pedestrianSemaphoresManual = new LinkedList<>();
@@ -36,6 +44,10 @@ public class Crossroad {
         c.trafficSemaphores.add(new AbstractMap.SimpleEntry<>(new Semaphore(Semaphore.SemaphoreType.TRAFFIC), CrossroadState.TWO));
 
         return c;
+    }
+
+    public int getStateWaitTime() {
+        return stateTime.get(state);
     }
 
     public void switchState() {
