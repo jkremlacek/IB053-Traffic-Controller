@@ -33,14 +33,14 @@ public class Semaphore {
                         }
                         interstep = !interstep;
                     } else {
-                        this.color = SemaphoreColor.YELLOW;
+                        this.color = SemaphoreColor.RED_AND_YELLOW;
                     }
                     break;
                 case YELLOW:
-                    this.color = SemaphoreColor.GREEN;
+                    this.color = SemaphoreColor.RED;
                     break;
                 case RED_AND_YELLOW:
-                    this.color = SemaphoreColor.RED;
+                    this.color = SemaphoreColor.GREEN;
                     break;
                 case GREEN:
                     if (type == SemaphoreType.PEDESTRIAN) {
@@ -49,7 +49,7 @@ public class Semaphore {
                         }
                         interstep = !interstep;
                     } else {
-                        this.color = SemaphoreColor.RED_AND_YELLOW;
+                        this.color = SemaphoreColor.YELLOW;
                     }
                     break;
             }
