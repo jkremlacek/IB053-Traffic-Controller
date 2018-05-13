@@ -23,6 +23,7 @@ public class CrossroadManager extends Thread {
     private final Lock queueMutex = new ReentrantLock(true);
     private Crossroad crossroad = Crossroad.getSimpleCrossroad();
     private int timeout = 0;
+    private long expectedChangeTime = 0;
 
     private Set<CrossroadCommand> commandQueue = Collections.synchronizedSet((Set) new LinkedHashSet<>()) ;
 
@@ -38,7 +39,7 @@ public class CrossroadManager extends Thread {
     public Map<String, Object> getCurrentCrossroadState() {
         Map<String, Object> m = new HashMap<>();
 
-        int remainingTime = crossroad.getStateWaitTime() - timeout;
+        long remainingTime = expectedChangeTime - System.currentTimeMillis();
 
         m.put("remainingTime", remainingTime > 0 ? remainingTime : 0);
         m.put("semaphores", crossroad.toMap());
@@ -86,6 +87,7 @@ public class CrossroadManager extends Thread {
                 timeout = 0;
             } else {
                 timeout += REFRESH_RATE;
+                expectedChangeTime = System.currentTimeMillis() + crossroad.getStateWaitTime() - timeout;
             }
 
             try {
