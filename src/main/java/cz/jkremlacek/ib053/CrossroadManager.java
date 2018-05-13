@@ -55,6 +55,10 @@ public class CrossroadManager extends Thread {
         queueMutex.unlock();
     }
 
+    public void setExpectedChangeTime(long time) {
+        expectedChangeTime = System.currentTimeMillis() + time;
+    }
+
     public void run() {
         while(true) {
             if (timeout > crossroad.getStateWaitTime()) {
@@ -87,7 +91,7 @@ public class CrossroadManager extends Thread {
                 timeout = 0;
             } else {
                 timeout += REFRESH_RATE;
-                expectedChangeTime = System.currentTimeMillis() + crossroad.getStateWaitTime() - timeout;
+                setExpectedChangeTime(crossroad.getStateWaitTime() - timeout);
             }
 
             try {

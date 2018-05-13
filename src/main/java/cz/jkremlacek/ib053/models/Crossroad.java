@@ -1,5 +1,7 @@
 package cz.jkremlacek.ib053.models;
 
+import cz.jkremlacek.ib053.CrossroadManager;
+
 import java.util.*;
 
 import static cz.jkremlacek.ib053.CrossroadManager.INTERCHANGE_TIMEOUT;
@@ -84,6 +86,7 @@ public class Crossroad {
         switchLights(state, manualNum);
 
         try {
+            CrossroadManager.getInstance().setExpectedChangeTime(INTERCHANGE_TIMEOUT);
             Thread.sleep(INTERCHANGE_TIMEOUT);
         } catch (InterruptedException e) {
             e.printStackTrace();
