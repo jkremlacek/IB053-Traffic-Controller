@@ -57,7 +57,13 @@ public class Semaphore {
     }
 
     public SemaphoreColor getColor() {
-        return color;
+        //pedestrian semaphore in green-to-red interstep must show red already
+        return
+                type == SemaphoreType.PEDESTRIAN &&
+                color == SemaphoreColor.GREEN &&
+                interstep ?
+                        SemaphoreColor.RED :
+                        color;
     }
 
     public String toString() {

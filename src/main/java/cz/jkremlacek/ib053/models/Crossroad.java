@@ -11,6 +11,8 @@ import static cz.jkremlacek.ib053.CrossroadManager.INTERCHANGE_TIMEOUT;
  */
 public class Crossroad {
 
+    private final int MIN_STATE_TIME = 10000;
+
     public enum CrossroadState {ONE, TWO, STOP}
 
     private static final Map<CrossroadState, Integer> stateTime;
@@ -29,6 +31,10 @@ public class Crossroad {
 
     public Crossroad() {
 
+    }
+
+    public int getMinStateTime() {
+        return MIN_STATE_TIME;
     }
 
     public static Crossroad getSimpleCrossroad() {
@@ -66,8 +72,18 @@ public class Crossroad {
         }
     }
 
-    public void switchStateTo(int manualNum) {
+    public boolean switchStateTo(int manualNum) {
+        if (pedestrianSemaphoresManual.size() < manualNum || manualNum < 0) {
+            throw new IllegalArgumentException("ManualNum must be within bounds: 0-" + pedestrianSemaphoresManual.size());
+        }
+
+        if (pedestrianSemaphoresManual.get(manualNum).getValue() == state) {
+            //do not change crossroad state to same state just with button, keep it for after one cycle
+            return false;
+        }
+
         switchStateTo(pedestrianSemaphoresManual.get(manualNum).getValue(), manualNum);
+        return true;
     }
 
     public void switchStateTo(CrossroadState state) {
@@ -75,7 +91,7 @@ public class Crossroad {
     }
 
     public void switchStateTo(CrossroadState state, int manualNum) {
-        if (this.state == state && manualNum != -1) {
+        if (this.state == state && manualNum == -1) {
             return;
         }
 

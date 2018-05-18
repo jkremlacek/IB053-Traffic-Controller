@@ -23,8 +23,16 @@ public class CrossroadCommand {
         return crossroadNumber;
     }
 
+    public boolean isTramCommand() {
+        return state != null;
+    }
+
     @Override
     public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+
         CrossroadCommand other = (CrossroadCommand) o;
         return state.equals(other.getState()) && crossroadNumber == other.getCrossroadNumber();
     }

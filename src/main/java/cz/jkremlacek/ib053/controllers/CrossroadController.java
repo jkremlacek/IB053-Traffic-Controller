@@ -51,7 +51,7 @@ public class CrossroadController {
             cmd = new CrossroadCommand(number);
         }
 
-        CrossroadManager.getInstance().addCommand(cmd);
+        new Thread(() -> CrossroadManager.getInstance().addCommand(cmd)).start();
 
         return Response.ok().build();
     }
