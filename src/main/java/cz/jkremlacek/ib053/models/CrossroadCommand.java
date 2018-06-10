@@ -34,7 +34,11 @@ public class CrossroadCommand {
         }
 
         CrossroadCommand other = (CrossroadCommand) o;
-        return state.equals(other.getState()) && crossroadNumber == other.getCrossroadNumber();
+
+        return (state == null ?
+                    state == other.getState() :
+                    state.equals(other.getState()))
+                && crossroadNumber == other.getCrossroadNumber();
     }
 
     @Override
