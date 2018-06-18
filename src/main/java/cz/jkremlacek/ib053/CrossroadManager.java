@@ -108,9 +108,15 @@ public class CrossroadManager extends Thread {
                                 }
                             } else {
                                 //pedestrian button change
-                                if (crossroad.switchStateTo(cmd.getCrossroadNumber())) {
+                                Iterator<CrossroadCommand> other = otherSideRequest(true);
+
+                                if (crossroad.switchStateTo(cmd.getCrossroadNumber(), other != null)) {
                                     //command is done only if the next state changes traffic lights
                                     it.remove();
+
+                                    if (other != null) {
+                                        otherSideRequest(false).remove();
+                                    }
                                 } else {
                                     //perform normal switching, keeping the button request for next cycle
                                     crossroad.switchState();
@@ -149,14 +155,20 @@ public class CrossroadManager extends Thread {
     }
 
     public Iterator<CrossroadCommand> getIterator() {
+        return getIterator(true);
+    }
+
+    public Iterator<CrossroadCommand> getIterator(boolean tramPriority) {
         CrossroadCommand[] commandsInQueue = commandQueue.toArray(new CrossroadCommand[commandQueue.size()]);
 
         int j = 0;
 
-        for (int i = 0; i < commandsInQueue.length; i++) {
-            if (commandsInQueue[i].getState() == Crossroad.CrossroadState.ONE) {
-                j = i;
-                break;
+        if (tramPriority) {
+            for (int i = 0; i < commandsInQueue.length; i++) {
+                if (commandsInQueue[i].getState() == Crossroad.CrossroadState.ONE) {
+                    j = i;
+                    break;
+                }
             }
         }
 
@@ -167,5 +179,22 @@ public class CrossroadManager extends Thread {
         }
 
         return it;
+    }
+
+    private Iterator<CrossroadCommand> otherSideRequest(boolean skipFirst) {
+        Iterator<CrossroadCommand> itOther = getIterator(false);
+
+        if (skipFirst) {
+            itOther.next();
+        }
+
+        while (itOther.hasNext()) {
+            CrossroadCommand other = itOther.next();
+
+            if (other.getState() == null) {
+                return itOther;
+            }
+        }
+        return null;
     }
 }

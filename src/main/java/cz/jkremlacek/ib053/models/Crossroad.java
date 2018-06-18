@@ -61,18 +61,18 @@ public class Crossroad {
     public void switchState() {
         switch (state) {
             case ONE:
-                switchStateTo(CrossroadState.TWO, -1);
+                switchStateTo(CrossroadState.TWO, -1, false);
                 break;
             case TWO:
-                switchStateTo(CrossroadState.ONE, -1);
+                switchStateTo(CrossroadState.ONE, -1, false);
                 break;
             case STOP:
-                switchStateTo(CrossroadState.ONE, -1);
+                switchStateTo(CrossroadState.ONE, -1, false);
                 break;
         }
     }
 
-    public boolean switchStateTo(int manualNum) {
+    public boolean switchStateTo(int manualNum, boolean bothSideChange) {
         if (pedestrianSemaphoresManual.size() < manualNum || manualNum < 0) {
             throw new IllegalArgumentException("ManualNum must be within bounds: 0-" + pedestrianSemaphoresManual.size());
         }
@@ -82,15 +82,15 @@ public class Crossroad {
             return false;
         }
 
-        switchStateTo(pedestrianSemaphoresManual.get(manualNum).getValue(), manualNum);
+        switchStateTo(pedestrianSemaphoresManual.get(manualNum).getValue(), manualNum, bothSideChange);
         return true;
     }
 
     public void switchStateTo(CrossroadState state) {
-        switchStateTo(state, -1);
+        switchStateTo(state, -1, false);
     }
 
-    public void switchStateTo(CrossroadState state, int manualNum) {
+    public void switchStateTo(CrossroadState state, int manualNum, boolean bothSideChange) {
         if (this.state == state && manualNum == -1) {
             return;
         }
@@ -99,7 +99,7 @@ public class Crossroad {
 
         //Lock
 
-        switchLights(state, manualNum);
+        switchLights(state, manualNum, bothSideChange);
 
         try {
             CrossroadManager.getInstance().setExpectedChangeTime(INTERCHANGE_TIMEOUT);
@@ -108,14 +108,14 @@ public class Crossroad {
             e.printStackTrace();
         }
 
-        switchLights(state, manualNum);
+        switchLights(state, manualNum, bothSideChange);
 
         this.state = state;
 
         //Unlock
     }
 
-    private void switchLights(CrossroadState state, int manualNum) {
+    private void switchLights(CrossroadState state, int manualNum, boolean bothSideChange) {
         for (Map.Entry<Semaphore, CrossroadState> s : pedestrianSemaphores) {
             s.getKey().changeColor(s.getValue() == state ? Semaphore.SemaphoreColor.GREEN : Semaphore.SemaphoreColor.RED);
         }
@@ -125,10 +125,10 @@ public class Crossroad {
         }
 
         if (manualNum != -1) {
-            pedestrianSemaphoresManual.get(manualNum).getKey().changeColor(Semaphore.SemaphoreColor.GREEN);
-
             for (int i = 0; i < pedestrianSemaphoresManual.size(); i++) {
-                if (i != manualNum) {
+                if (i == manualNum || bothSideChange) {
+                    pedestrianSemaphoresManual.get(i).getKey().changeColor(Semaphore.SemaphoreColor.GREEN);
+                } else {
                     pedestrianSemaphoresManual.get(i).getKey().changeColor(Semaphore.SemaphoreColor.RED);
                 }
             }
