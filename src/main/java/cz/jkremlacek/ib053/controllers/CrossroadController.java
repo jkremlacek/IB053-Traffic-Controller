@@ -51,8 +51,10 @@ public class CrossroadController {
             cmd = new CrossroadCommand(number);
         }
 
-        new Thread(() -> CrossroadManager.getInstance().addCommand(cmd)).start();
+        //non-blocking variant - not used due to MS Azure thread limit
+        //new Thread(() -> CrossroadManager.getInstance().addCommand(cmd)).start();
 
+        CrossroadManager.getInstance().addCommand(cmd);
         return Response.ok().build();
     }
 }
