@@ -18,7 +18,9 @@ public class CrossroadManager extends Thread {
 
     public static final int INTERCHANGE_TIMEOUT = 5000;
 
+    private boolean unlocked = true;
     private Lock queueMutex = new ReentrantLock(true);
+
     private Crossroad crossroad = Crossroad.getSimpleCrossroad();
     private int timeout = 0;
     private long expectedChangeTime = 0;
@@ -67,6 +69,8 @@ public class CrossroadManager extends Thread {
                         timeout > crossroad.getStateWaitTime() ||
                         (!commandQueue.isEmpty() && getIterator().next().isTramCommand()))
                 {
+                    boolean stateChanged = true;
+
                     if (commandQueue.isEmpty()) {
                         //no external command, do regular swap
                         crossroad.switchState();
@@ -74,59 +78,22 @@ public class CrossroadManager extends Thread {
                         //external command present
 
                         queueMutex.lock();
-                        boolean unlocked = false;
+                        unlocked = false;
                         try {
-
-                            //get top priority command (tram has higher priority than pedestrian)
-                            Iterator<CrossroadCommand> it = getIterator();
-
-                            CrossroadCommand cmd = it.next();
-
-                            if (cmd.getState() != null) {
-                                //tram change
-
-                                if (timeout < crossroad.getMinStateTime()) {
-                                    //wait for at least the minimal time period (otherwise tram could stop pedestrians just as they got green)
-                                    it.remove();
-                                    //unlock mutex prior to sleeping
-                                    queueMutex.unlock();
-                                    unlocked = true;
-
-                                    setExpectedChangeTime(crossroad.getMinStateTime() - timeout);
-                                    try {
-                                        Thread.sleep(crossroad.getMinStateTime() - timeout);
-                                    } finally {
-                                        crossroad.switchStateTo(cmd.getState());
-                                    }
-                                } else {
-                                    crossroad.switchStateTo(cmd.getState());
-                                    it.remove();
-                                }
-                            } else {
-                                //pedestrian button change
-                                Iterator<CrossroadCommand> other = otherSideRequest(true);
-
-                                if (crossroad.switchStateTo(cmd.getCrossroadNumber(), other != null)) {
-                                    //command is done only if the next state changes traffic lights
-                                    it.remove();
-
-                                    if (other != null) {
-                                        otherSideRequest(false).remove();
-                                    }
-                                } else {
-                                    //perform normal switching, keeping the button request for next cycle
-                                    crossroad.switchState();
-                                }
-
-                            }
-
+                            stateChanged = processCommand();
                         } finally {
                             if (!unlocked) {
                                 queueMutex.unlock();
+                                unlocked = true;
                             }
                         }
                     }
-                    timeout = 0;
+
+                    if (stateChanged) {
+                        timeout = 0;
+                    } else {
+                        timeout += REFRESH_RATE;
+                    }
                 } else {
                     timeout += REFRESH_RATE;
                 }
@@ -142,6 +109,7 @@ public class CrossroadManager extends Thread {
         } catch (Exception e) {
             //dirty catch everything - crossroad must be running at all costs, force restart
             queueMutex = new ReentrantLock(true);
+            unlocked = true;
             crossroad = Crossroad.getSimpleCrossroad();
             commandQueue = Collections.synchronizedSet((Set) new LinkedHashSet<>()) ;
             timeout = 0;
@@ -192,5 +160,61 @@ public class CrossroadManager extends Thread {
             }
         }
         return null;
+    }
+
+    private boolean processCommand() throws InterruptedException {
+        //get top priority command (tram has higher priority than pedestrian)
+        Iterator<CrossroadCommand> it = getIterator();
+        CrossroadCommand cmd = it.next();
+
+        if (cmd.getState() != null) {
+            return processTramCommand(it, cmd);
+        } else {
+            processPedestrianCommand(it, cmd);
+            return true;
+        }
+    }
+
+    private void processPedestrianCommand(Iterator<CrossroadCommand> it, CrossroadCommand cmd) {
+        Iterator<CrossroadCommand> other = otherSideRequest(true);
+
+        if (crossroad.switchStateTo(cmd.getCrossroadNumber(), other != null)) {
+            //command is done only if the next state changes traffic lights
+            it.remove();
+
+            if (other != null) {
+                otherSideRequest(false).remove();
+            }
+        } else {
+            //perform normal switching, keeping the button request for next cycle
+            crossroad.switchState();
+        }
+    }
+
+    private boolean processTramCommand(Iterator<CrossroadCommand> it, CrossroadCommand cmd) throws InterruptedException {
+        if (crossroad.isSameState(cmd.getState())) {
+            it.remove();
+            return false;
+        }
+
+        if (timeout < crossroad.getMinStateTime()) {
+            //wait for at least the minimal time period (otherwise tram could stop pedestrians just as they got green)
+            it.remove();
+            //unlock mutex prior to sleeping
+            queueMutex.unlock();
+            unlocked = true;
+
+            setExpectedChangeTime(crossroad.getMinStateTime() - timeout);
+            try {
+                Thread.sleep(crossroad.getMinStateTime() - timeout);
+            } finally {
+                crossroad.switchStateTo(cmd.getState());
+            }
+        } else {
+            crossroad.switchStateTo(cmd.getState());
+            it.remove();
+        }
+
+        return true;
     }
 }

@@ -141,6 +141,10 @@ public class Crossroad {
         }
     }
 
+    public boolean isSameState(CrossroadState state) {
+        return this.state == state;
+    }
+
     public Map<String, Object> toMap() {
         Map<String, Object> returnMap = new HashMap<>();
 
