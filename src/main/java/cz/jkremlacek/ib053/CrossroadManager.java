@@ -47,7 +47,6 @@ public class CrossroadManager extends Thread {
     }
 
     public void addCommand(CrossroadCommand cmd) {
-        //TODO: tram priority over pedestrian buttons
         queueMutex.lock();
         try {
             commandQueue.add(cmd);
@@ -88,19 +87,16 @@ public class CrossroadManager extends Thread {
 
                                 if (timeout < crossroad.getMinStateTime()) {
                                     //wait for at least the minimal time period (otherwise tram could stop pedestrians just as they got green)
+                                    it.remove();
+                                    //unlock mutex prior to sleeping
+                                    queueMutex.unlock();
+                                    unlocked = true;
+
+                                    setExpectedChangeTime(crossroad.getMinStateTime() - timeout);
                                     try {
-                                        it.remove();
-                                        //unlock mutex prior to sleeping
-                                        queueMutex.unlock();
-                                        unlocked = true;
-
-                                        setExpectedChangeTime(crossroad.getMinStateTime() - timeout);
                                         Thread.sleep(crossroad.getMinStateTime() - timeout);
-
+                                    } finally {
                                         crossroad.switchStateTo(cmd.getState());
-                                    } catch (InterruptedException e) {
-                                        //just put stacktrace out (or send it to LOG) and continue
-                                        e.printStackTrace();
                                     }
                                 } else {
                                     crossroad.switchStateTo(cmd.getState());
@@ -130,12 +126,12 @@ public class CrossroadManager extends Thread {
                             }
                         }
                     }
-
                     timeout = 0;
                 } else {
                     timeout += REFRESH_RATE;
-                    setExpectedChangeTime(crossroad.getStateWaitTime() - timeout);
                 }
+
+                setExpectedChangeTime(crossroad.getStateWaitTime() - timeout);
 
                 try {
                     Thread.sleep(REFRESH_RATE);
@@ -165,7 +161,7 @@ public class CrossroadManager extends Thread {
 
         if (tramPriority) {
             for (int i = 0; i < commandsInQueue.length; i++) {
-                if (commandsInQueue[i].getState() == Crossroad.CrossroadState.ONE) {
+                if (commandsInQueue[i].getState() != null) {
                     j = i;
                     break;
                 }
