@@ -13,6 +13,8 @@ public class Crossroad {
 
     private final int MIN_STATE_TIME = 10000;
 
+    //ONE - vertical direction
+    //TWO - horizontal direction
     public enum CrossroadState {ONE, TWO, STOP}
 
     private static final Map<CrossroadState, Integer> stateTime;
