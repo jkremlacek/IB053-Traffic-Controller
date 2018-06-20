@@ -25,15 +25,11 @@ public class Crossroad {
         stateTime.put(CrossroadState.STOP, 5000);
     }
 
-    private List<Map.Entry<Semaphore, CrossroadState>> trafficSemaphores = new LinkedList<>();
-    private List<Map.Entry<Semaphore, CrossroadState>> pedestrianSemaphores = new LinkedList<>();
-    private List<Map.Entry<Semaphore, CrossroadState>> pedestrianSemaphoresManual = new LinkedList<>();
+    private final List<Map.Entry<Semaphore, CrossroadState>> trafficSemaphores = new LinkedList<>();
+    private final List<Map.Entry<Semaphore, CrossroadState>> pedestrianSemaphores = new LinkedList<>();
+    private final List<Map.Entry<Semaphore, CrossroadState>> pedestrianSemaphoresManual = new LinkedList<>();
 
     private CrossroadState state = CrossroadState.STOP;
-
-    public Crossroad() {
-
-    }
 
     public int getMinStateTime() {
         return MIN_STATE_TIME;
@@ -92,14 +88,26 @@ public class Crossroad {
         switchStateTo(state, -1, false);
     }
 
-    public void switchStateTo(CrossroadState state, int manualNum, boolean bothSideChange) {
+    public boolean isSameState(CrossroadState state) {
+        return this.state == state;
+    }
+
+    public Map<String, Object> toMap() {
+        Map<String, Object> returnMap = new HashMap<>();
+
+        returnMap.put("trafficSemaphores", Crossroad.transformSemaphoreEntry(trafficSemaphores));
+        returnMap.put("pedestrianSemaphores", Crossroad.transformSemaphoreEntry(pedestrianSemaphores));
+        returnMap.put("pedestrianSemaphoresManual", Crossroad.transformSemaphoreEntry(pedestrianSemaphoresManual));
+
+        return returnMap;
+    }
+
+    private void switchStateTo(CrossroadState state, int manualNum, boolean bothSideChange) {
         if (this.state == state && manualNum == -1) {
             return;
         }
 
         state = state == null ? this.state : state;
-
-        //Lock
 
         switchLights(state, manualNum, bothSideChange);
 
@@ -113,8 +121,6 @@ public class Crossroad {
         switchLights(state, manualNum, bothSideChange);
 
         this.state = state;
-
-        //Unlock
     }
 
     private void switchLights(CrossroadState state, int manualNum, boolean bothSideChange) {
@@ -135,31 +141,13 @@ public class Crossroad {
                 }
             }
         } else {
-            for (int i = 0; i < pedestrianSemaphoresManual.size(); i++) {
-                pedestrianSemaphoresManual.get(i).getKey().changeColor(Semaphore.SemaphoreColor.RED);
+            for (Map.Entry<Semaphore, CrossroadState> pedestrianSemaphoreManual : pedestrianSemaphoresManual) {
+                pedestrianSemaphoreManual.getKey().changeColor(Semaphore.SemaphoreColor.RED);
             }
         }
     }
 
-    public boolean isSameState(CrossroadState state) {
-        return this.state == state;
-    }
-
-    public Map<String, Object> toMap() {
-        Map<String, Object> returnMap = new HashMap<>();
-
-        //Lock
-
-        returnMap.put("trafficSemaphores", Crossroad.transformSemaphoreEntry(trafficSemaphores));
-        returnMap.put("pedestrianSemaphores", Crossroad.transformSemaphoreEntry(pedestrianSemaphores));
-        returnMap.put("pedestrianSemaphoresManual", Crossroad.transformSemaphoreEntry(pedestrianSemaphoresManual));
-
-        //Unlock
-
-        return returnMap;
-    }
-
-    public static List<Object> transformSemaphoreEntry(List<Map.Entry<Semaphore, CrossroadState>> entries) {
+    private static List<Object> transformSemaphoreEntry(List<Map.Entry<Semaphore, CrossroadState>> entries) {
         List<Object> l = new LinkedList<>();
 
         for (Map.Entry<Semaphore, CrossroadState> entry : entries) {

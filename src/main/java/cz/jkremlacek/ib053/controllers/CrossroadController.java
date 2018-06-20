@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.ws.rs.core.Response;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -43,7 +44,7 @@ public class CrossroadController {
             try {
                 stateEnum = Crossroad.CrossroadState.valueOf(state.toUpperCase());
             } catch (IllegalArgumentException e) {
-                return Response.status(Response.Status.BAD_REQUEST).entity("State invalid value: " + state + " use one of: " + Crossroad.CrossroadState.values()).build();
+                return Response.status(Response.Status.BAD_REQUEST).entity("State invalid value: " + state + " use one of: " + Arrays.toString(Crossroad.CrossroadState.values())).build();
             }
 
             cmd = new CrossroadCommand(stateEnum);

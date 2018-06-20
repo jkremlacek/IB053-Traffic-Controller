@@ -15,19 +15,20 @@ public class Semaphore {
         TRAFFIC, PEDESTRIAN
     }
 
-    private SemaphoreType type;
+    private final SemaphoreType TYPE;
+
     private boolean interstep = false;
     private SemaphoreColor color = SemaphoreColor.RED;
 
     public Semaphore(SemaphoreType type) {
-        this.type = type;
+        this.TYPE = type;
     }
 
     public void changeColor(SemaphoreColor requestColor) {
         if (requestColor != color) {
             switch (color) {
                 case RED:
-                    if (type == SemaphoreType.PEDESTRIAN) {
+                    if (TYPE == SemaphoreType.PEDESTRIAN) {
                         if (interstep) {
                             this.color = SemaphoreColor.GREEN;
                         }
@@ -43,7 +44,7 @@ public class Semaphore {
                     this.color = SemaphoreColor.GREEN;
                     break;
                 case GREEN:
-                    if (type == SemaphoreType.PEDESTRIAN) {
+                    if (TYPE == SemaphoreType.PEDESTRIAN) {
                         if (interstep) {
                             this.color = SemaphoreColor.RED;
                         }
@@ -54,16 +55,6 @@ public class Semaphore {
                     break;
             }
         }
-    }
-
-    public SemaphoreColor getColor() {
-        //pedestrian semaphore in green-to-red interstep must show red already
-        return
-                type == SemaphoreType.PEDESTRIAN &&
-                color == SemaphoreColor.GREEN &&
-                interstep ?
-                        SemaphoreColor.RED :
-                        color;
     }
 
     public String toString() {

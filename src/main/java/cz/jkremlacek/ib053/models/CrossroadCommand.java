@@ -33,12 +33,16 @@ public class CrossroadCommand {
             return false;
         }
 
+        if (!(o instanceof CrossroadCommand)) {
+            return false;
+        }
+
         CrossroadCommand other = (CrossroadCommand) o;
 
-        return (state == null ?
-                    state == other.getState() :
-                    state.equals(other.getState()))
-                && crossroadNumber == other.getCrossroadNumber();
+        return crossroadNumber == other.getCrossroadNumber() &&
+            (state == null ?
+                    other.getState() == null :
+                    state.equals(other.getState()));
     }
 
     @Override

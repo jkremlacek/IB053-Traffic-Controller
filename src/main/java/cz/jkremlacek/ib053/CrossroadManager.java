@@ -14,11 +14,12 @@ public class CrossroadManager extends Thread {
     private static CrossroadManager INSTANCE;
 
     //how often should be queue checked
-    private static final int REFRESH_RATE = 1 * 1000;
+    private static final int REFRESH_RATE = 1000;
 
     public static final int INTERCHANGE_TIMEOUT = 5000;
 
     private boolean unlocked = true;
+    private boolean running = false;
     private Lock queueMutex = new ReentrantLock(true);
 
     private Crossroad crossroad = Crossroad.getSimpleCrossroad();
@@ -36,6 +37,11 @@ public class CrossroadManager extends Thread {
         return INSTANCE;
     }
 
+    /**
+     * Creates a Map representing current state of the crossroad
+     *
+     * @return state map
+     */
     public Map<String, Object> getCurrentCrossroadState() {
         Map<String, Object> m = new HashMap<>();
 
@@ -48,6 +54,11 @@ public class CrossroadManager extends Thread {
         return m;
     }
 
+    /**
+     * Inserts command into the queue to be processed by the main thread
+     *
+     * @param cmd command to be put into the queue
+     */
     public void addCommand(CrossroadCommand cmd) {
         queueMutex.lock();
         try {
@@ -57,12 +68,27 @@ public class CrossroadManager extends Thread {
         }
     }
 
+    /**
+     * Overrides expected change time
+     *
+     * @param time time difference until next change
+     */
     public void setExpectedChangeTime(long time) {
         expectedChangeTime = System.currentTimeMillis() + time;
     }
 
+    /**
+     * Starts main cycle in current thread, therefore should be called in a new thread.
+     */
     public void run() {
+        if (running) {
+            return;
+        }
+
         try {
+            running = true;
+
+            //infinitely running cycle - if required kill command could be added into CrossroadCommand
             while(true) {
                 //change crossroad state if its time or! if tram is waiting
                 if (
@@ -114,15 +140,16 @@ public class CrossroadManager extends Thread {
             commandQueue = Collections.synchronizedSet((Set) new LinkedHashSet<>()) ;
             timeout = 0;
             expectedChangeTime = 0;
+            running = false;
             run();
         }
     }
 
-    public Iterator<CrossroadCommand> getIterator() {
+    private Iterator<CrossroadCommand> getIterator() {
         return getIterator(true);
     }
 
-    public Iterator<CrossroadCommand> getIterator(boolean tramPriority) {
+    private Iterator<CrossroadCommand> getIterator(boolean tramPriority) {
         CrossroadCommand[] commandsInQueue = commandQueue.toArray(new CrossroadCommand[commandQueue.size()]);
 
         int j = 0;
@@ -183,7 +210,11 @@ public class CrossroadManager extends Thread {
             it.remove();
 
             if (other != null) {
-                otherSideRequest(false).remove();
+                Iterator<CrossroadCommand> otherWithoutSkip = otherSideRequest(false);
+
+                if (otherWithoutSkip != null) {
+                    otherWithoutSkip.remove();
+                }
             }
         } else {
             //perform normal switching, keeping the button request for next cycle
