@@ -59,13 +59,13 @@ public class Crossroad {
     public void switchState() {
         switch (state) {
             case ONE:
-                switchStateTo(CrossroadState.TWO, -1, false);
+                switchStateTo(CrossroadState.TWO);
                 break;
             case TWO:
-                switchStateTo(CrossroadState.ONE, -1, false);
+                switchStateTo(CrossroadState.ONE);
                 break;
             case STOP:
-                switchStateTo(CrossroadState.ONE, -1, false);
+                switchStateTo(CrossroadState.ONE);
                 break;
         }
     }
